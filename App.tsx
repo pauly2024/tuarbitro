@@ -187,10 +187,10 @@ const App: React.FC = () => {
 
     const safetyTimeout = setTimeout(() => {
       if (mounted && isSessionChecking) {
-        console.warn('[Auth] Safety timeout reached for session check (120s)');
+        console.warn('[Auth] Safety timeout reached for session check (20s)');
         setIsSessionChecking(false);
       }
-    }, 15000);
+    }, 20000);
 
     return () => {
       mounted = false;
@@ -215,8 +215,8 @@ const App: React.FC = () => {
 
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(
-          () => reject(new Error('Timeout loading profile - La base de datos no responde (5s)')),
-          5000
+          () => reject(new Error('Timeout loading profile - La base de datos no responde (10s)')),
+          10000
         )
       );
 
