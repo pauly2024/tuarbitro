@@ -39,14 +39,14 @@ const App: React.FC = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get('ref');
-    console.log("[App] URL params:", window.location.search, "ref found:", ref);
+    if (import.meta.env.DEV) console.log("[App] URL params:", window.location.search, "ref found:", ref);
     if (ref) {
       setReferrerId(ref);
       sessionStorage.setItem('tuarbitro_ref', ref);
-      console.log("[App] Referrer set to:", ref);
+      if (import.meta.env.DEV) console.log("[App] Referrer set to:", ref);
     } else {
       const savedRef = sessionStorage.getItem('tuarbitro_ref');
-      console.log("[App] No ref in URL, saved ref:", savedRef);
+      if (import.meta.env.DEV) console.log("[App] No ref in URL, saved ref:", savedRef);
       if (savedRef) setReferrerId(savedRef);
     }
   }, []);
@@ -54,16 +54,16 @@ const App: React.FC = () => {
   useEffect(() => {
     const syncSettings = async () => {
       try {
-        console.log('[Settings] Syncing...');
+        if (import.meta.env.DEV) console.log('[Settings] Syncing...');
         const settingsPromise = supabase.from('settings').select('*').limit(1).maybeSingle();
         const settingsTimeout = new Promise<any>((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout syncing settings')), 60000)
+          setTimeout(() => reject(new Error('Timeout syncing settings')), 10000)
         );
 
         const { data } = await Promise.race([settingsPromise, settingsTimeout]);
 
         if (data) {
-          console.log('[Settings] Sync complete');
+          if (import.meta.env.DEV) console.log('[Settings] Sync complete');
           const currentLocal = getAdminSettings();
           const validLogo = data.logo_url && data.logo_url.length > 5 ? data.logo_url : currentLocal.logoUrl;
 
@@ -159,11 +159,11 @@ const App: React.FC = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
-      console.log(`[Auth] Event: ${event}`, session?.user?.id);
+      if (import.meta.env.DEV) console.log(`[Auth] Event: ${event}`, session?.user?.id);
 
       if (session) {
         if (lastProcessedUserId.current === session.user.id && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
-          console.log('[Auth] User already processed, skipping redundant entry');
+          if (import.meta.env.DEV) console.log('[Auth] User already processed, skipping redundant entry');
           setIsSessionChecking(false);
           return;
         }
@@ -174,7 +174,7 @@ const App: React.FC = () => {
           await handleUserEntry(session.user.id, session.user.email || 'usuario@tuarbitro.com');
         }
       } else {
-        console.log('[Auth] No session active');
+        if (import.meta.env.DEV) console.log('[Auth] No session active');
         lastProcessedUserId.current = null;
         setIsAuthenticated(false);
         setIsRoleConfirmed(false);
@@ -190,7 +190,7 @@ const App: React.FC = () => {
         console.warn('[Auth] Safety timeout reached for session check (120s)');
         setIsSessionChecking(false);
       }
-    }, 120000);
+    }, 15000);
 
     return () => {
       mounted = false;
@@ -204,7 +204,7 @@ const App: React.FC = () => {
     if (!silent) setLoadingData(true);
 
     if (isFetchingRef.current) {
-      console.log('[Auth] Fetch already in progress, skipping...');
+      if (import.meta.env.DEV) console.log('[Auth] Fetch already in progress, skipping...');
       setIsSessionChecking(false);
       return;
     }
@@ -215,17 +215,17 @@ const App: React.FC = () => {
 
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(
-          () => reject(new Error('Timeout loading profile - La base de datos no responde (12s)')),
-          30000
+          () => reject(new Error('Timeout loading profile - La base de datos no responde (5s)')),
+          5000
         )
       );
 
       const dataPromise = (async () => {
         try {
-          console.time('handleUserEntry-' + userId);
-          console.log('[Auth] Fetching profile for:', userId);
+          if (import.meta.env.DEV) console.time('handleUserEntry-' + userId);
+          if (import.meta.env.DEV) console.log('[Auth] Fetching profile for:', userId);
 
-          console.time('profileFetch');
+          if (import.meta.env.DEV) console.time('profileFetch');
           // ✅ CORREGIDO: ahora pide también referrals_available y locked
           const profileFetch = supabase
             .from('profiles')
@@ -234,9 +234,9 @@ const App: React.FC = () => {
             .maybeSingle();
 
           const { data: profile, error: profileError } = await profileFetch;
-          console.timeEnd('profileFetch');
+          if (import.meta.env.DEV) console.timeEnd('profileFetch');
 
-          console.log('[Auth] Profile fetch complete');
+          if (import.meta.env.DEV) console.log('[Auth] Profile fetch complete');
 
           if (profileError) {
             console.error('[Auth] Error fetching profile:', JSON.stringify(profileError, null, 2));
@@ -271,7 +271,7 @@ const App: React.FC = () => {
           let currentProfile = profile;
 
           if (!currentProfile) {
-            console.log('[Auth] Profile not found, creating new one...');
+            if (import.meta.env.DEV) console.log('[Auth] Profile not found, creating new one...');
             const userName = email.split('@')[0];
             const { data: newProfile, error: upsertError } = await supabase
               .from('profiles')
@@ -294,12 +294,12 @@ const App: React.FC = () => {
   console.error('[Auth] Error creating profile:', JSON.stringify(upsertError, null, 2));
   throw upsertError;
 }
-console.log('[Auth] New profile created successfully');
+if (import.meta.env.DEV) console.log('[Auth] New profile created successfully');
 currentProfile = newProfile || { id: userId, email, name: userName, role: 'USER' };
 }
 
 if (currentProfile && referrerId && referrerId !== 'admin' && currentProfile.referred_by == null && userId !== referrerId) {
-  console.log('[Auth] Applying referral:', referrerId);
+  if (import.meta.env.DEV) console.log('[Auth] Applying referral:', referrerId);
   try {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     let sponsorId: string | null = referrerId;
@@ -323,7 +323,7 @@ if (currentProfile && referrerId && referrerId !== 'admin' && currentProfile.ref
         console.error('[Auth] Error updating referred_by:', refErr);
       } else {
         currentProfile.referred_by = sponsorId;
-        console.log('[Auth] Referral applied successfully');
+        if (import.meta.env.DEV) console.log('[Auth] Referral applied successfully');
       }
     }
   } catch (e) {
@@ -331,17 +331,17 @@ if (currentProfile && referrerId && referrerId !== 'admin' && currentProfile.ref
   }
 }
 
-          console.log('[Auth] Fetching contracts and deposits...');
-          console.time('contractsFetch');
+          if (import.meta.env.DEV) console.log('[Auth] Fetching contracts and deposits...');
+          if (import.meta.env.DEV) console.time('contractsFetch');
           const contractsPromise = supabase.from('contracts').select('*').eq('user_id', userId).limit(100);
-          console.time('depositsFetch');
+          if (import.meta.env.DEV) console.time('depositsFetch');
           const depositsPromise = supabase.from('deposits').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(50);
 
           const [contractsRes, depositsRes] = await Promise.all([contractsPromise, depositsPromise]);
-          console.timeEnd('contractsFetch');
-          console.timeEnd('depositsFetch');
+          if (import.meta.env.DEV) console.timeEnd('contractsFetch');
+          if (import.meta.env.DEV) console.timeEnd('depositsFetch');
 
-          console.log('[Auth] Contracts/Deposits fetch complete');
+          if (import.meta.env.DEV) console.log('[Auth] Contracts/Deposits fetch complete');
 
           if (contractsRes.error) {
             console.error('[Auth] Contracts error:', contractsRes.error);
@@ -363,7 +363,7 @@ if (currentProfile && referrerId && referrerId !== 'admin' && currentProfile.ref
           const contractsData = contractsRes.data || [];
           const depositsData = depositsRes.data || [];
 
-          console.timeEnd('handleUserEntry-' + userId);
+          if (import.meta.env.DEV) console.timeEnd('handleUserEntry-' + userId);
 
           return {
             profile: currentProfile,
@@ -400,7 +400,7 @@ if (currentProfile && referrerId && referrerId !== 'admin' && currentProfile.ref
         setProfileLoadError(null);
         const { profile, contractsDb, deposits } = result;
 
-        console.log('[Auth] Profile loaded:', {
+        if (import.meta.env.DEV) console.log('[Auth] Profile loaded:', {
           id: profile.id,
           name: profile.name,
           available: profile.available,
