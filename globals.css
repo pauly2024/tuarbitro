@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2DD4BF;
+  --color-secondary: #1754CF;
+  --color-bg-dark: #0A0C12;
+  --color-slate-card: #161B26;
+  --color-neon-mint: #39FF14;
+  
+  /* Overrides to make gray text and icons pure electric/fluorescent blue */
+  --color-slate-300: #93c5fd; /* blue-300 */
+  --color-slate-400: #60a5fa; /* blue-400 */
+  --color-slate-500: #3b82f6; /* blue-500 */
+  --color-slate-600: #2563eb; /* blue-600 */
+  --color-slate-700: #1d4ed8; /* blue-700 */
+  
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+    background-color: #0A0C12;
+    color: #F1F5F9;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+.glass-card {
+    background: rgba(22, 27, 38, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ios-blur {
+    background: rgba(10, 12, 18, 0.8);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+@keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.animate-pulse-soft {
+    animation: pulse-soft 3s ease-in-out infinite;
+}
