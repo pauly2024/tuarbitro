@@ -9,3 +9,5 @@ supabase/.temp/
 .mcp.json
 PROJECT_MEMORY.md
 CLAUDE.md
+.vercel
+.env*.local

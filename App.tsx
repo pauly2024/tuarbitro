@@ -54,13 +54,30 @@ const App: React.FC = () => {
   useEffect(() => {
     const syncSettings = async () => {
       try {
-        if (import.meta.env.DEV) console.log('[Settings] Syncing...');
-        const settingsPromise = supabase.from('settings').select('*').limit(1).maybeSingle();
-        const settingsTimeout = new Promise<any>((_, reject) =>
+        if (import.meta.env.DEV) console.log('[Settings] Syncing... Wait for user session');
+
+        // Esperar a que la sesión esté disponible
+        const timeout = new Promise<any>((_, reject) =>
           setTimeout(() => reject(new Error('Timeout syncing settings')), 10000)
         );
 
-        const { data } = await Promise.race([settingsPromise, settingsTimeout]);
+        const userResult = await Promise.race([
+          supabase.auth.getUser(),
+          timeout
+        ]);
+
+        if (!userResult.data?.user) {
+          if (import.meta.env.DEV) console.log('[Settings] No user session yet, skipping settings');
+          return;
+        }
+
+        const settingsPromise = supabase
+          .from('settings')
+          .select('*')
+          .limit(1)
+          .maybeSingle();
+
+        const { data } = await settingsPromise;
 
         if (data) {
           if (import.meta.env.DEV) console.log('[Settings] Sync complete');
